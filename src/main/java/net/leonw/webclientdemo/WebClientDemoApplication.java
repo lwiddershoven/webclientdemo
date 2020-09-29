@@ -5,10 +5,13 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +30,19 @@ public class WebClientDemoApplication {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "my.client.logging.enabled", havingValue = "false", matchIfMissing = true)
     public WebClient webClient(WebClient.Builder builder) {
         return builder.baseUrl("http://localhost:8080").build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "my.client.logging.enabled", havingValue = "true")
+    public WebClient webClientWithWireLogging(WebClient.Builder builder) {
+        var client = HttpClient.create().wiretap(true); // NOTE: This is the _reactor_ HttpClient.
+        return builder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://localhost:8080")
+                .build();
     }
 
 }
