@@ -28,6 +28,15 @@ EZipExampleController is an extra.
 Look at the code to see if you can understand it. And run the tests (and look at the elapsed time) to see 
 various things running in parallel. Every call on the mock server takes 2 seconds.
 
+Available calls are (httpie commands):
+- `http GET http://localhost:8081/basic-examples/orders/1`
+- `http GET http://localhost:8081/basic-examples/orders/?id=1,2,3,4,5,6,7`
+- `http GET http://localhost:8081/basic-examples/enriched-orders/1`
+- `http GET http://localhost:8081/refactored-examples/enriched-orders/1`
+- `http GET http://localhost:8081/with-retries-example/enriched-orders/1`
+- `http GET http://localhost:8081/decent-error-handling-example/enriched-orders/1`
+- `http GET http://localhost:8081/zip-example/orders/1`
+
 ## Some extra remarks
 
 TODO. Wisdom of blockhound, how to deal with traditional HttpClient calls, links to reactive docs.
