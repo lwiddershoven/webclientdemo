@@ -39,4 +39,16 @@ Available calls are (httpie commands):
 
 ## Some extra remarks
 
+- if you do not `subscribe` (or `block`/`blockLast`) nothing happens
+- try to use `retrieve`, not `exchange`
+- if you *have* to use `exchange`, you *must* consume the body to prevent a [memory leak](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/reactive/function/client/WebClient.RequestHeadersSpec.html#exchange--)
+- There should be at most 1 `subscribe` (or `block`/`blockLast`) in the code started by the controller. Zero if you use the WebFlux server where controller methods return `Mono` or `Flux`
+- [How do I ....](https://projectreactor.io/docs/core/release/reference/#faq). Read this. Really. At least the questions. So you know what is apperently not trivial
+- Operator documentation can be found in [Mono](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html) and [Flux](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html) 
+  It pays to spend the time and understand the diagrams. Even at the expense of the headaches you'll get.
+-  [Testing Reactor](https://projectreactor.io/docs/core/release/reference/#testing) is not easy, but there are facilities to help
+- Do not use resilience4j retry in your flow. It blocks. 
+- [Map or Flatmap](https://medium.com/@nikeshshetty/5-common-mistakes-of-webflux-novices-f8eda0cd6291#:~:text=Yes%20there%20is%20a%20difference,operations%20which%20are%20done%20synchronously.)
+
+
 TODO. Wisdom of blockhound, how to deal with traditional HttpClient calls, links to reactive docs.
