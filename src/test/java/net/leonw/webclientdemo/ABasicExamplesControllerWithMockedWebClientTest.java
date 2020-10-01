@@ -167,7 +167,5 @@ class ABasicExamplesControllerWithMockedWebClientTest {
                 new EnrichedOrder(order, List.of(new EnrichedOrderLine(orderLine, product))),
                 retrieved
         );
-
-
     }
 }
