@@ -146,4 +146,28 @@ class ABasicExamplesControllerWithMockedWebClientTest {
         when(requestHeadersSpec.retrieve())
                 .thenReturn(responseSpec);
     }
+
+    @Test
+    void get_enriched_order_all_data_available() {
+        var order = new Order("123", List.of("xxx"));
+        var orderLine = new OrderLine("234", "abc");
+        var product = new Product("abc", "def");
+
+        setupWebClient2();
+        when(responseSpec.bodyToMono(Order.class))
+                .thenReturn(Mono.just(order));
+        when(responseSpec.bodyToMono(OrderLine.class))
+                .thenReturn(Mono.just(orderLine));
+        when(responseSpec.bodyToMono(Product.class))
+                .thenReturn(Mono.just(product));
+
+        EnrichedOrder retrieved = controller.getEnrichedOrderList("1");
+
+        assertEquals(
+                new EnrichedOrder(order, List.of(new EnrichedOrderLine(orderLine, product))),
+                retrieved
+        );
+
+
+    }
 }
