@@ -31,7 +31,7 @@ public class ABasicExamplesController {
 
     // You can add ids by ?id=1&id=2&... or ?id=1,2,3,4
     @GetMapping("/basic-examples/orders/")
-    public List<Order> getMany(@RequestParam("id") Set<String> ids) {
+    public List<Order> getMultipleOrders(@RequestParam("id") Set<String> ids) {
         List<Order> orders = Flux.fromIterable(ids)
                 .flatMap(id -> webClient.get().uri("/orders/{id}", id).retrieve().bodyToMono(Order.class).retry(3)) // Flatmap: Ditch the Mono 'wrapper'
                 .collectList()
