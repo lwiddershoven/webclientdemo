@@ -1,7 +1,9 @@
 package net.leonw.webclientdemo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -80,10 +82,11 @@ class EnrichedOrderLine {
 }
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 class Order {
-    private String id;
-    private List<String> orderLineIds;
+    @JsonProperty("id") private String id;
+    @JsonProperty( "orderLineIds") private List<String> orderLineIds;
 }
 
 @Data
