@@ -5,10 +5,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -111,8 +113,37 @@ class ABasicExamplesControllerWithMockedWebClientTest {
                 .thenReturn(Mono.just(value));
     }
 
+    @Test
+    void get_multiple_orders_succeeds() {
+        List<Order> expected = List.of(
+                new Order("a", Collections.emptyList()),
+                new Order("b", Collections.emptyList()),
+                new Order("c", Collections.emptyList())
+        );
+        setupWebClient2();
+        when(responseSpec.bodyToMono(Order.class))
+                .thenReturn(Mono.just(expected.get(0)))
+                .thenReturn(Mono.just(expected.get(1)))
+                .thenReturn(Mono.just(expected.get(2)));
+
+        // Set.of. Lovely that these utility builders are now included in baseline java.
+        List<Order> retrieved = controller.getMultipleOrders(Set.of("a", "b", "c"));
+
+        assertEquals(expected, retrieved);
+
+        // And yes. It does seem to make sense to put setupWebClient2 in the Before part
+        // and do the responseSpec in the method.
+    }
 
 
-
-
+    // Cannot inspect the value class runtime if it is the param of a Collection.
+    private void setupWebClient2() {
+        when(webClient.get())
+                .thenReturn(requestHeadersUriSpec);
+        // I don't really feel the need to verify the URL here.
+        when(requestHeadersUriSpec.uri(anyString(), anyString()))
+                .thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve())
+                .thenReturn(responseSpec);
+    }
 }
