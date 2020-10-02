@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,6 +18,7 @@ import reactor.netty.http.client.HttpClient;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -60,7 +62,11 @@ class TimingFilter implements Filter {
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
             HttpServletRequest request = (HttpServletRequest) servletRequest; // Yes. No instanceof. I dare to do this
-            log.info("{} {} took {} ms", request.getMethod(), request.getRequestURI(), Duration.between(start, Instant.now()).toMillis());
+            HttpServletResponse response = (HttpServletResponse)servletResponse;
+            HttpStatus status = HttpStatus.valueOf(response.getStatus());
+            log.info("{}{} {} (status {}) took {} ms",
+                    status.isError() ? "FAILED " : "",
+                    request.getMethod(), request.getRequestURI(), status.value(), Duration.between(start, Instant.now()).toMillis());
         }
     }
 }
