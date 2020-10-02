@@ -30,4 +30,10 @@ public class TestUtils {
                         .build()
         );
     }
+
+    public  static Mono<ClientResponse> createMockStatusResponse(HttpStatus status) {
+        return Mono.just(
+                ClientResponse.create(status).build()
+        );
+    }
 }
