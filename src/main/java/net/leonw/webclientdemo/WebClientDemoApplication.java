@@ -90,13 +90,17 @@ class Order {
 }
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 class OrderLine {
-    private String id, productId;
+    @JsonProperty private String id;
+    @JsonProperty private String productId;
 }
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 class Product {
-    private String id, data;
+    @JsonProperty private String id;
+    @JsonProperty private String data;
 }
