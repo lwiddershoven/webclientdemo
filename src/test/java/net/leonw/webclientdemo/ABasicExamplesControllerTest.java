@@ -6,18 +6,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.PathContainer;
 import org.springframework.web.reactive.function.client.*;
-import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -144,6 +147,175 @@ class ABasicExamplesControllerTest {
 
         // assertEquals also compares ordering
         assertThat(expected.equals(retrieved));
+    }
+
+    @Test
+    public void get_enriched_orders_the_wrong_way() {
+        Map<String, Order> orders = List.of(
+                new Order("a", List.of("a1", "a2")),
+                new Order("b", List.of("b1", "b2")),
+                new Order("c", List.of("c1", "c2"))
+        ).stream()
+                .collect(Collectors.toMap(Order::getId, Function.identity()));
+
+        Map<String, OrderLine> orderLines = List.of(
+                new OrderLine("a1", "p1"),
+                new OrderLine("a2", "p2"),
+                new OrderLine("b1", "p1") // not needed
+                ).stream()
+                .collect(Collectors.toMap(OrderLine::getId, Function.identity()));
+
+        Map<String, Product> products = List.of(
+                new Product("p1", "x")
+                // No p2
+                ).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        // This is WRONG because we cannot assume the order in which various calls are done
+        // by the reactive engine
+        when(exchangeFunction.exchange(any(ClientRequest.class)))
+                .thenReturn(createMockResponse(orders.get("a")))
+                .thenReturn(createMockResponse(orderLines.get("a1")))
+                .thenReturn(createMockResponse(orderLines.get("a2")))
+                .thenReturn(createMockResponse(products.get("p1")))
+                .thenReturn(createMockResponse(products.get("p2")));
+
+        var retrieved = controller.getEnrichedOrderList("a");
+
+        var expected = new EnrichedOrder(orders.get("a"),
+                List.of(
+                        new EnrichedOrderLine(orderLines.get("a1"), products.get("p1")),
+                        new EnrichedOrderLine(orderLines.get("a2"), products.get("p2"))
+                )
+        );
+
+        // Do check: for me it gave a really interesting result in that it mapped orderline json data to
+        // a product. I do not have strict json enabled, but it does show that expecting ordering is not
+        // a great choice.
+        // assertEquals(expected, retrieved);
+    }
+
+    @Test
+    public void get_enriched_orders() {
+        Map<String, Order> orders = List.of(
+                new Order("a", List.of("a1", "a2")),
+                new Order("b", List.of("b1", "b2")),
+                new Order("c", List.of("c1", "c2"))
+        ).stream()
+                .collect(Collectors.toMap(Order::getId, Function.identity()));
+
+        Map<String, OrderLine> orderLines = List.of(
+                new OrderLine("a1", "p1"),
+                new OrderLine("a2", "p2"),
+                new OrderLine("b1", "p1") // not needed
+        ).stream()
+                .collect(Collectors.toMap(OrderLine::getId, Function.identity()));
+
+        Map<String, Product> products = List.of(
+                new Product("p1", "x"),
+                new Product("p2", "x")
+        ).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        // This is WRONG because we cannot assume the order in which various calls are done
+        // by the reactive engine
+        when(exchangeFunction.exchange(any(ClientRequest.class)))
+                .thenReturn(createMockResponse(orders.get("a"))) // This is safe - always the first call
+                .thenAnswer(new Answer<Mono<ClientResponse>>() {
+                                @Override
+                                public Mono<ClientResponse> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                                    var request = (ClientRequest)invocationOnMock.getArgument(0);
+                                    var path = PathContainer.parsePath(request.url().getPath());
+
+                                    var  orderLinesPathPattern = PathPatternParser.defaultInstance.parse("/orderlines/{id}");
+                                    var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
+
+                                    System.out.println("URL: " + request.url().getPath());
+
+                                    if (orderLinesPathPattern.matches(path)) {
+                                        return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                    } else if (productsPathPattern.matches(path)) {
+                                        return createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                    } else {
+                                        throw new IllegalStateException("Unsupported path requested: " + request.url().getPath());
+                                    }
+                                }
+                            }
+                );
+
+        var retrieved = controller.getEnrichedOrderList("a");
+
+        var expected = new EnrichedOrder(orders.get("a"),
+                List.of(
+                        new EnrichedOrderLine(orderLines.get("a1"), products.get("p1")),
+                        new EnrichedOrderLine(orderLines.get("a2"), products.get("p2"))
+                )
+        );
+
+        assertTrue(expected.equals(retrieved));
+    }
+
+    @Test
+    public void get_enriched_orders_with_missing_product() {
+        // Note: I'm not simulating 404 but you forgetting to setup testsdata correctl. Like I did :(
+        Map<String, Order> orders = List.of(
+                new Order("a", List.of("a1", "a2")),
+                new Order("b", List.of("b1", "b2")),
+                new Order("c", List.of("c1", "c2"))
+        ).stream()
+                .collect(Collectors.toMap(Order::getId, Function.identity()));
+
+        Map<String, OrderLine> orderLines = List.of(
+                new OrderLine("a1", "p1"),
+                new OrderLine("a2", "p2"),
+                new OrderLine("b1", "p1") // not needed
+        ).stream()
+                .collect(Collectors.toMap(OrderLine::getId, Function.identity()));
+
+        Map<String, Product> products = List.of(
+                new Product("p1", "x")
+//                 new Product("p2", "x")   "Forgot" tp add p2
+        ).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        // This is WRONG because we cannot assume the order in which various calls are done
+        // by the reactive engine
+        when(exchangeFunction.exchange(any(ClientRequest.class)))
+                .thenReturn(createMockResponse(orders.get("a"))) // This is safe - always the first call
+                .thenAnswer(new Answer<Mono<ClientResponse>>() {
+                                @Override
+                                public Mono<ClientResponse> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                                    var request = (ClientRequest)invocationOnMock.getArgument(0);
+                                    var path = PathContainer.parsePath(request.url().getPath());
+
+                                    var  orderLinesPathPattern = PathPatternParser.defaultInstance.parse("/orderlines/{id}");
+                                    var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
+
+                                    System.out.println("URL: " + request.url().getPath());
+
+                                    if (orderLinesPathPattern.matches(path)) {
+                                        return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                    } else if (productsPathPattern.matches(path)) {
+                                        return createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                    } else {
+                                        throw new IllegalStateException("Unsupported path requested: " + request.url().getPath());
+                                    }
+                                }
+                            }
+                );
+
+        var retrieved = controller.getEnrichedOrderList("a");
+
+        var expected = new EnrichedOrder(orders.get("a"),
+                List.of(
+                        new EnrichedOrderLine(orderLines.get("a1"), products.get("p1"))
+//                        , Because I forgot to define p2 the flatmap orderLine -> [product completes without result and thus
+//                         that orderline does not exist.
+//                        new EnrichedOrderLine(orderLines.get("a2"), products.get("p2"))
+                )
+        );
+
+        assertTrue(expected.equals(retrieved));
     }
 
 
