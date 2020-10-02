@@ -80,7 +80,7 @@ class ABasicExamplesControllerTest {
         // From:  https://stackoverflow.com/questions/45301220/how-to-mock-spring-webflux-webclient
         // Note: If you get null pointer exceptions related to publishers on the when call, your IDE might have imported Mono.when instead of Mockito.when.
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMockResponse(expected));
+                .thenReturn(TestUtils.createMockResponse(expected));
         Order retrieved = controller.getOrder("1");
         assertEquals(expected, retrieved);
     }
@@ -89,7 +89,7 @@ class ABasicExamplesControllerTest {
     @Test
     void get_order_404_throws_NotFound() {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMock404Response());
+                .thenReturn(TestUtils.createMock404Response());
         assertThrows(WebClientResponseException.NotFound.class, () ->  controller.getOrder("1"));
     }
 
@@ -103,9 +103,9 @@ class ABasicExamplesControllerTest {
         );
 
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMockResponse(expected.get(0)))
-                .thenReturn(createMockResponse(expected.get(1)))
-                .thenReturn(createMockResponse(expected.get(2)));
+                .thenReturn(TestUtils.createMockResponse(expected.get(0)))
+                .thenReturn(TestUtils.createMockResponse(expected.get(1)))
+                .thenReturn(TestUtils.createMockResponse(expected.get(2)));
 
         // Do note that there need to be 3. Not with the same ids as I do not use
         // the Mockito "Answer" for matching. But Flux.fromIterable will trigger a call
@@ -138,7 +138,7 @@ class ABasicExamplesControllerTest {
 
                     return expected.stream()
                             .filter(o -> o.getId().equals(orderId))
-                            .map(this::createMockResponse)
+                            .map(TestUtils::createMockResponse)
                             .findFirst()
                             .orElseThrow();
                 });
@@ -174,11 +174,11 @@ class ABasicExamplesControllerTest {
         // This is WRONG because we cannot assume the order in which various calls are done
         // by the reactive engine
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMockResponse(orders.get("a")))
-                .thenReturn(createMockResponse(orderLines.get("a1")))
-                .thenReturn(createMockResponse(orderLines.get("a2")))
-                .thenReturn(createMockResponse(products.get("p1")))
-                .thenReturn(createMockResponse(products.get("p2")));
+                .thenReturn(TestUtils.createMockResponse(orders.get("a")))
+                .thenReturn(TestUtils.createMockResponse(orderLines.get("a1")))
+                .thenReturn(TestUtils.createMockResponse(orderLines.get("a2")))
+                .thenReturn(TestUtils.createMockResponse(products.get("p1")))
+                .thenReturn(TestUtils.createMockResponse(products.get("p2")));
 
         var retrieved = controller.getEnrichedOrderList("a");
 
@@ -220,7 +220,7 @@ class ABasicExamplesControllerTest {
         // This is WRONG because we cannot assume the order in which various calls are done
         // by the reactive engine
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMockResponse(orders.get("a"))) // This is safe - always the first call
+                .thenReturn(TestUtils.createMockResponse(orders.get("a"))) // This is safe - always the first call
                 .thenAnswer(new Answer<Mono<ClientResponse>>() {
                                 @Override
                                 public Mono<ClientResponse> answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -231,9 +231,9 @@ class ABasicExamplesControllerTest {
                                     var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
 
                                     if (orderLinesPathPattern.matches(path)) {
-                                        return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                        return TestUtils.createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
                                     } else if (productsPathPattern.matches(path)) {
-                                        return createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                        return TestUtils.createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
                                     } else {
                                         throw new IllegalStateException("Unsupported path requested: " + request.url().getPath());
                                     }
@@ -279,7 +279,7 @@ class ABasicExamplesControllerTest {
         // This is WRONG because we cannot assume the order in which various calls are done
         // by the reactive engine
         when(exchangeFunction.exchange(any(ClientRequest.class)))
-                .thenReturn(createMockResponse(orders.get("a"))) // This is safe - always the first call
+                .thenReturn(TestUtils.createMockResponse(orders.get("a"))) // This is safe - always the first call
                 .thenAnswer(new Answer<Mono<ClientResponse>>() {
                                 @Override
                                 public Mono<ClientResponse> answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -290,9 +290,9 @@ class ABasicExamplesControllerTest {
                                     var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
 
                                     if (orderLinesPathPattern.matches(path)) {
-                                        return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                        return TestUtils.createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
                                     } else if (productsPathPattern.matches(path)) {
-                                        return createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
+                                        return TestUtils.createMockResponse(products.get( productsPathPattern.matchAndExtract(path).getUriVariables().get("id")));
                                     } else {
                                         throw new IllegalStateException("Unsupported path requested: " + request.url().getPath());
                                     }
@@ -313,30 +313,4 @@ class ABasicExamplesControllerTest {
 
         assertTrue(expected.equals(retrieved));
     }
-
-
-    private <T> Mono<ClientResponse> createMockResponse(T value) {
-        String valueAsString;
-        try {
-            valueAsString = new ObjectMapper().writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e); // Junit test will fail without bothering me
-        }
-
-        return Mono.just(
-                ClientResponse.create(HttpStatus.OK)
-                        .header("content-type", "application/json")
-                        .body(valueAsString)
-                        .build()
-        );
-    }
-
-    private  Mono<ClientResponse> createMock404Response() {
-        return Mono.just(
-                ClientResponse.create(HttpStatus.NOT_FOUND)
-                        .header("content-type", "application/json")
-                        .build()
-        );
-    }
-
 }
