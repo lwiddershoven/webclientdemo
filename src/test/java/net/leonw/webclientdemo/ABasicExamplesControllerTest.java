@@ -162,13 +162,13 @@ class ABasicExamplesControllerTest {
                 new OrderLine("a1", "p1"),
                 new OrderLine("a2", "p2"),
                 new OrderLine("b1", "p1") // not needed
-                ).stream()
+        ).stream()
                 .collect(Collectors.toMap(OrderLine::getId, Function.identity()));
 
         Map<String, Product> products = List.of(
                 new Product("p1", "x")
                 // No p2
-                ).stream()
+        ).stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
         // This is WRONG because we cannot assume the order in which various calls are done
@@ -230,8 +230,6 @@ class ABasicExamplesControllerTest {
                                     var  orderLinesPathPattern = PathPatternParser.defaultInstance.parse("/orderlines/{id}");
                                     var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
 
-                                    System.out.println("URL: " + request.url().getPath());
-
                                     if (orderLinesPathPattern.matches(path)) {
                                         return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
                                     } else if (productsPathPattern.matches(path)) {
@@ -290,8 +288,6 @@ class ABasicExamplesControllerTest {
 
                                     var  orderLinesPathPattern = PathPatternParser.defaultInstance.parse("/orderlines/{id}");
                                     var  productsPathPattern = PathPatternParser.defaultInstance.parse("/products/{id}");
-
-                                    System.out.println("URL: " + request.url().getPath());
 
                                     if (orderLinesPathPattern.matches(path)) {
                                         return createMockResponse(orderLines.get( orderLinesPathPattern.matchAndExtract(path).getUriVariables().get("id")));
