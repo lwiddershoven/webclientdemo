@@ -67,7 +67,7 @@ public class DWithErrorHandlingController {
                         throwable -> {
                             // Deal with 404. I think this method sucks but I don't know of a better way
                             if (throwable instanceof WebClientResponseException.NotFound) {
-                                log.warn("Call for product id {} returned 404. replacing result with default value");
+                                log.warn("Call for product id {} returned 404. replacing result with default value", id);
                                 return true; // YES return the default
                             } else {
                                 return false; // NO rethrow the error
