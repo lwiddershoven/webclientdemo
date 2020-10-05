@@ -36,6 +36,11 @@ Available calls are (httpie commands):
 - `http GET http://localhost:8081/with-retries-example/enriched-orders/1`
 - `http GET http://localhost:8081/decent-error-handling-example/enriched-orders/1`
 - `http GET http://localhost:8081/zip-example/orders/1`
+- `http GET http://localhost:8081/f-ultimate-example-perhaps/enriched-orders/1`
+
+And there are of course a number of junit tests available showing 3 ways of testing your code. 
+Junit test with a mock webClient, junit test with a real webClient but mocked exchange function (e.g. replace
+network interaction with a mock value), and an integration test with build-in web server.
 
 ## Some extra remarks
 
