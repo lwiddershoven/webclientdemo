@@ -48,7 +48,7 @@ public class FMyPreferredSetupController {
                                     .collectList()
                                     .map(enrichedOrderLines -> new EnrichedOrder(order, enrichedOrderLines))
                     )
-                    .doOnSuccess(completedEnrichedOrder -> log.info("Success retrieving enriched order {}", id, completedEnrichedOrder))
+                    .doOnSuccess(completedEnrichedOrder -> log.info("Success retrieving enriched order {}: {}", id, completedEnrichedOrder))
                     .doOnError(throwable -> log.warn("Retrieving enriched order {} failed", id, throwable))
                     .block(Duration.of(props.getMaxDurationSeconds(), ChronoUnit.SECONDS)); // Larger timeout since retries can cost.
         } catch (IllegalStateException e) {

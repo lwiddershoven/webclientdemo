@@ -37,7 +37,7 @@ public class DWithErrorHandlingController {
                                 .collectList()
                                 .map(enrichedOrderLines -> new EnrichedOrder(order, enrichedOrderLines))
                 )
-                .doOnSuccess(completedEnrichedOrder -> log.info("Success retrieving id {}", id, completedEnrichedOrder))
+                .doOnSuccess(completedEnrichedOrder -> log.info("Success retrieving id {}: {}", id, completedEnrichedOrder))
                 .doOnError(throwable -> log.warn("Retrieving id {} failed", id, throwable))
                 .block(Duration.of(15, ChronoUnit.SECONDS)); // Larger timeout since retries can cost.
     }
