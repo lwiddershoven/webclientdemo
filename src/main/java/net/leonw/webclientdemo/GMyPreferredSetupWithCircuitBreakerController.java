@@ -88,8 +88,6 @@ class GOrderRetriever {
     @NonNull
     private WebClient webClient;
     @NonNull
-    private GMyPreferredSetupControllerWithCircuitBreakerProperties props;
-    @NonNull
     private ReactiveCircuitBreakerFactory reactiveCircuitBreakerFactory;
     private ReactiveCircuitBreaker circuitBreaker;
 
