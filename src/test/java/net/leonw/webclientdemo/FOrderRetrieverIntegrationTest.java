@@ -43,6 +43,11 @@ public class FOrderRetrieverIntegrationTest {
 
     @BeforeAll
     static void setUp() throws IOException {
+
+        // Note; in the G test I moved this to @BeforeEach and changed @AfterAll to @AfterEach.
+        // The backend is stateful and unrequested mockResponses will just be processed by the next
+        // test, which is confusing.
+
         mockBackEnd = new MockWebServer();
         mockBackEnd.start();
     }
