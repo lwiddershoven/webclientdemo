@@ -16,7 +16,7 @@
 
     <properties>
         <java.version>16</java.version>
-        <blockhound.version>1.0.4.RELEASE</blockhound.version>
+        <blockhound.version>1.0.6.RELEASE</blockhound.version>
         <springfox.version>3.0.0</springfox.version>
     </properties>
 
