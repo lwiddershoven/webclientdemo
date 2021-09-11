@@ -1,4 +1,4 @@
-name: Java 14 Maven Build
+name: Java 16 Maven Build
 
 on:
   push:
