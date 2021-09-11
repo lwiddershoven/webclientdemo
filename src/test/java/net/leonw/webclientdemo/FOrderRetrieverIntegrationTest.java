@@ -114,7 +114,9 @@ public class FOrderRetrieverIntegrationTest {
         Mono<Order> orderMono = retriever.retrieve("1");
 
         StepVerifier.create(orderMono)
-                .expectErrorMatches(t -> Exceptions.isRetryExhausted(t) && (t.getCause() instanceof UnsupportedMediaTypeException))
+                // t.getCause().getCause ? That looked better in Spring Boot 2.3 .
+                // Thank you for pushing the real cause even further away!
+                .expectErrorMatches(t -> Exceptions.isRetryExhausted(t) &&  (t.getCause().getCause() instanceof UnsupportedMediaTypeException))
 //                .expectErrorMatches(t -> Exceptions.isRetryExhausted(t) && (t.getCause() instanceof NullPointerException)) // I did verify the test works :)
 //                .verifyComplete(); This has no timeout - do not use
                 .verify(Duration.ofSeconds(30));
