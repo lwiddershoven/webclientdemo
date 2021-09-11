@@ -2,12 +2,9 @@ name: Java 16 Maven Build
 
 on:
   push:
-    branches:
-      - main
-      - fixes/**
+    branches: [ main, fixes/** ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
